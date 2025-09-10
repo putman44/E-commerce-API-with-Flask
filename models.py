@@ -38,6 +38,8 @@ class Order(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     order_date: Mapped[datetime] = mapped_column(DateTime, insert_default=func.now())
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+    # One-to-Many backref
     user: Mapped["User"] = relationship(back_populates="orders")
 
     # Many-to-many
