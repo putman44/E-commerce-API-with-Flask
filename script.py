@@ -42,7 +42,6 @@ db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 ma = Marshmallow(app)
 
-# Create classes
 
 # Junction Table
 # User → Order (one-to-many).
@@ -55,6 +54,8 @@ order_product = Table(
     Column("order_id", ForeignKey("orders.id"), primary_key=True),
     Column("product_id", ForeignKey("products.id"), primary_key=True),
 )
+
+# Create classes
 
 
 class User(Base):
@@ -105,8 +106,45 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 class OrderSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Order
+        include_fk = True
 
 
 class ProductSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Product
+
+
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
+
+order_schema = OrderSchema()
+orders_schema = OrderSchema(many=True)
+
+product_schema = ProductSchema()
+products_schema = ProductSchema(many=True)
+
+# Routes
+
+
+@app.route("/users", methods=["POST"])
+def create_user():
+    try:
+        user_data = user_schema.load(request.json)
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+
+    new_user = User(
+        name=user_data["name"], address=user_data["address"], email=user_data["email"]
+    )
+    db.session.add(new_user)
+    db.session.commit()
+
+    return user_schema.jsonify(new_user), 201
+
+
+if __name__ == "__main__":
+    with app.app_context():
+        # db.drop_all()  # Uncomment this line to drop all tables
+        db.create_all()
+
+    app.run(debug=True)
