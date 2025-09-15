@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify
 from models import db, Order, User, Product, OrderProduct
 from schemas import order_schema, orders_schema
 from sqlalchemy import select

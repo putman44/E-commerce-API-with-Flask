@@ -23,8 +23,7 @@ def create_user():
 
 @users_bp.route("/users", methods=["GET"])
 def get_users():
-    query = select(User)
-    users = db.session.execute(query).scalars().all()
+    users = db.session.execute(select(User)).scalars().all()
     return users_schema.jsonify(users), 200
 
 

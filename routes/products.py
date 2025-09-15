@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
 
-from models import db, Order, User, Product
+from models import db, Product
 from schemas import product_schema, products_schema
 
 products_bp = Blueprint("products", __name__)

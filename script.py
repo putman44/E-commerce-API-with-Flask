@@ -1,5 +1,5 @@
 from flask import Flask
-from models import db, Base
+from models import db
 from schemas import ma
 from routes import all_blueprints  # ⬅️ import all at once
 
