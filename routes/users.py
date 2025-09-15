@@ -35,7 +35,7 @@ def get_users():
 def update_user(id):
     user = db.session.get(User, id)
     if not user:
-        return jsonify({"message": "Invalid user id"}), 400
+        return jsonify({"message": "Invalid user id"}), 404
 
     try:
         user_data = user_schema.load(request.json)
@@ -52,8 +52,8 @@ def update_user(id):
 def delete_user(id):
     user = db.session.get(User, id)
     if not user:
-        return jsonify({"message": "Invalid user id"}), 400
+        return jsonify({"message": "Invalid user id"}), 404
 
     db.session.delete(user)
     db.session.commit()
-    return jsonify({"message": f"successfully deleted user {id}"}), 200
+    return jsonify({"message": f"Successfully deleted user {user.name}"}), 200

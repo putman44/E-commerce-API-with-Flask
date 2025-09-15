@@ -3,23 +3,39 @@ from models import User, Order, Product
 
 ma = Marshmallow()
 
+# load_instance = True
+# load_instance=True → “deserialize JSON/data into SQLAlchemy model objects, not dictionaries.”
 
-class UserSchema(ma.SQLAlchemyAutoSchema):
+# It’s mostly for convenience when building APIs, so you can skip the manual model construction.
+
+
+class ProductSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = User
+        model = Product
+        load_instance = True
 
 
 class OrderSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Order
         include_fk = True
+        include_relationships = True
+        load_instance = True
+
+    # include related products
+    products = ma.Nested(ProductSchema, many=True)
 
 
-class ProductSchema(ma.SQLAlchemyAutoSchema):
+class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = Product
+        model = User
+        include_relationships = True
+        load_instance = True
+
+    orders = ma.Nested(OrderSchema, many=True)
 
 
+# Schema instances
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 

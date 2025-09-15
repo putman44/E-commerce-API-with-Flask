@@ -25,9 +25,9 @@ order_product = Table(
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(30), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
     address: Mapped[str] = mapped_column(String(100), nullable=False)
-    email: Mapped[str] = mapped_column(String(50), nullable=False)
+    email: Mapped[str] = mapped_column(String(254), nullable=False)
 
     # One-to-many
     orders: Mapped[List["Order"]] = relationship(back_populates="user")
@@ -51,7 +51,7 @@ class Order(Base):
 class Product(Base):
     __tablename__ = "products"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    product_name: Mapped[str] = mapped_column(String(30), nullable=False)
+    product_name: Mapped[str] = mapped_column(String(100), nullable=False)
     price: Mapped[float] = mapped_column(Float)
 
     # Many-to-many
