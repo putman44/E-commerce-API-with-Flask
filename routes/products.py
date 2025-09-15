@@ -13,49 +13,64 @@ products_bp = Blueprint("products", __name__)
 def create_product():
 
     try:
-        product_data = product_schema.load(request.json)
+        product_data = product_schema.load(request.json)  # returns Product instance
     except ValidationError as e:
-        return jsonify(e.messages), 400
+        return jsonify({"errors": e.messages}), 400
 
-    # Create new product
-    new_product = Product(
-        product_name=product_data["product_name"], price=product_data["price"]
-    )
-
-    # Add to DB
-    db.session.add(new_product)
+    db.session.add(product_data)
     db.session.commit()
 
-    return product_schema.jsonify(new_product), 201
+    return product_schema.jsonify(product_data), 201
 
 
 @products_bp.route("/products", methods=["GET"])
 def get_products():
-    query = select(Product)
-    products = db.session.execute(query).scalars().all()
+    products = db.session.execute(select(Product)).scalars().all()
     return products_schema.jsonify(products), 200
 
 
-@products_bp.route("/products/<int:id>", methods=["PUT"])
-def update_product(id):
-    product = db.session.get(Product, id)
+@products_bp.route("/products/<int:product_id>", methods=["GET"])
+def get_product(product_id):
+    product = db.session.get(Product, product_id)
+
+    if not product:
+        return jsonify({"message": "Invalid product id"}), 404
+    return product_schema.jsonify(product), 200
+
+
+@products_bp.route("/products/<int:product_id>", methods=["PUT"])
+def update_product(product_id):
+    product = db.session.get(Product, product_id)
     if not product:
         return jsonify({"message": "Invalid product id"}), 400
 
     try:
-        product_data = product_schema.load(request.json)
+        # partial=True allows updating only some fields
+        product_data = product_schema.load(request.json, partial=True)
     except ValidationError as e:
         return jsonify(e.messages), 400
 
-    product.product_name = product_data["product_name"]
-    product.price = product_data["price"]
-    db.session.commit()
+    # Update only provided fields
+    for field in ["product_name", "price"]:
+        value = getattr(product_data, field, None)
+        if value is not None:
+            setattr(product, field, value)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        # rollback() resets the session to a clean state by:
+        # Discarding all pending changes that weren’t committed.
+        # Allowing you to continue using the session for other operations.
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
     return product_schema.jsonify(product), 200
 
 
-@products_bp.route("/products/<int:id>", methods=["DELETE"])
-def delete_product(id):
-    product = db.session.get(Product, id)
+@products_bp.route("/products/<int:product_id>", methods=["DELETE"])
+def delete_product(product_id):
+    product = db.session.get(Product, product_id)
     if not product:
         return jsonify({"message": "Invalid product id"}), 400
 

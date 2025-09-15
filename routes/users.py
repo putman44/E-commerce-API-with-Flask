@@ -16,12 +16,9 @@ def create_user():
     except ValidationError as e:
         return jsonify(e.messages), 400
 
-    new_user = User(
-        name=user_data["name"], address=user_data["address"], email=user_data["email"]
-    )
-    db.session.add(new_user)
+    db.session.add(user_data)
     db.session.commit()
-    return user_schema.jsonify(new_user), 201
+    return user_schema.jsonify(user_data), 201
 
 
 @users_bp.route("/users", methods=["GET"])
@@ -31,29 +28,55 @@ def get_users():
     return users_schema.jsonify(users), 200
 
 
-@users_bp.route("/users/<int:id>", methods=["PUT"])
-def update_user(id):
-    user = db.session.get(User, id)
+@users_bp.route("/users/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+    user = db.session.get(User, user_id)
+
     if not user:
         return jsonify({"message": "Invalid user id"}), 404
-
-    try:
-        user_data = user_schema.load(request.json)
-    except ValidationError as e:
-        return jsonify(e.messages), 400
-
-    user.name = user_data["name"]
-    user.email = user_data["email"]
-    db.session.commit()
     return user_schema.jsonify(user), 200
 
 
-@users_bp.route("/users/<int:id>", methods=["DELETE"])
-def delete_user(id):
+@users_bp.route("/users/<int:id>", methods=["PUT"])
+def update_user(id):
+    # 1️⃣ Fetch the existing user
     user = db.session.get(User, id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    # 2️⃣ Load the incoming JSON into a User instance
+    try:
+        # partial=True allows sending only some fields
+        user_data = user_schema.load(request.json, partial=True)
+    except ValidationError as e:
+        return jsonify({"errors": e.messages}), 400
+
+    # 3️⃣ Update only the fields provided
+    for field in ["name", "email", "address"]:
+        value = getattr(user_data, field, None)
+        if value is not None:
+            setattr(user, field, value)
+
+    # 4️⃣ Commit changes
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    # 5️⃣ Return the updated user
+    return user_schema.jsonify(user), 200
+
+
+@users_bp.route("/users/<int:user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    user = db.session.get(User, user_id)
     if not user:
         return jsonify({"message": "Invalid user id"}), 404
 
     db.session.delete(user)
     db.session.commit()
-    return jsonify({"message": f"Successfully deleted user {user.name}"}), 200
+    return (
+        jsonify({"message": f"Successfully deleted user {user.id}: {user.name}"}),
+        200,
+    )

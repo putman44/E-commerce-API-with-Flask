@@ -14,12 +14,27 @@ db = SQLAlchemy(model_class=Base)
 # User → Order (one-to-many).
 # Order ↔ Product (many-to-many via a junction table).
 
-order_product = Table(
-    "order_product",
-    Base.metadata,
-    Column("order_id", ForeignKey("orders.id"), primary_key=True),
-    Column("product_id", ForeignKey("products.id"), primary_key=True),
-)
+# order_product = Table(
+#     "order_product",
+#     Base.metadata,
+#     Column("order_id", ForeignKey("orders.id"), primary_key=True),
+#     Column("product_id", ForeignKey("products.id"), primary_key=True),
+# )
+
+# In order to have a quantity column the Table is not enough,
+# created a OrderProduct class and added relationships
+
+
+class OrderProduct(Base):
+    __tablename__ = "order_product"
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), primary_key=True)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+
+    order: Mapped["Order"] = relationship("Order", back_populates="order_products")
+    product: Mapped["Product"] = relationship(
+        "Product", back_populates="order_products"
+    )
 
 
 class User(Base):
@@ -43,9 +58,7 @@ class Order(Base):
     user: Mapped["User"] = relationship(back_populates="orders")
 
     # Many-to-many
-    products: Mapped[List["Product"]] = relationship(
-        secondary=order_product, back_populates="orders"
-    )
+    order_products: Mapped[list["OrderProduct"]] = relationship(back_populates="order")
 
 
 class Product(Base):
@@ -55,6 +68,6 @@ class Product(Base):
     price: Mapped[float] = mapped_column(Float)
 
     # Many-to-many
-    orders: Mapped[List["Order"]] = relationship(
-        secondary=order_product, back_populates="products"
+    order_products: Mapped[list["OrderProduct"]] = relationship(
+        back_populates="product"
     )

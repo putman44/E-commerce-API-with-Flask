@@ -1,5 +1,5 @@
 from flask_marshmallow import Marshmallow
-from models import User, Order, Product
+from models import User, Order, Product, OrderProduct
 
 ma = Marshmallow()
 
@@ -7,6 +7,15 @@ ma = Marshmallow()
 # load_instance=True → “deserialize JSON/data into SQLAlchemy model objects, not dictionaries.”
 
 # It’s mostly for convenience when building APIs, so you can skip the manual model construction.
+
+
+class OrderProductSchema(ma.SQLAlchemyAutoSchema):
+    product = ma.Nested("ProductSchema")
+
+    class Meta:
+        model = OrderProduct
+        include_relationships = True
+        load_instance = True
 
 
 class ProductSchema(ma.SQLAlchemyAutoSchema):
@@ -23,7 +32,7 @@ class OrderSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
 
     # include related products
-    products = ma.Nested(ProductSchema, many=True)
+    order_products = ma.Nested(OrderProductSchema, many=True)
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
@@ -36,6 +45,9 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 
 
 # Schema instances
+order_product_schema = OrderProductSchema()
+order_products_schema = OrderProductSchema(many=True)
+
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 
