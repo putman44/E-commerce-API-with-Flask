@@ -18,6 +18,20 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 ma.init_app(app)
 
+import click
+
+# flask --app script reset-db
+
+
+@app.cli.command("reset-db")
+def reset_db():
+    """Drops and recreates all tables."""
+    click.confirm("This will erase the database, continue?", abort=True)
+    db.drop_all()
+    db.create_all()
+    click.echo("Database has been reset ✅")
+
+
 # Register all blueprints in a loop
 for bp in all_blueprints:
     app.register_blueprint(bp)
